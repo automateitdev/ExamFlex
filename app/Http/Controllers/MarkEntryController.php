@@ -251,9 +251,9 @@ class MarkEntryController extends Controller
     {
         // if($request->institute_id == 10221){
 
-        Log::channel('merit_log')->info('Merit Process Request', [
-            'request' => $request->all()
-        ]);
+        // Log::channel('merit_log')->info('Merit Process Request', [
+        //     'request' => $request->all()
+        // ]);
 
 
         $authHeader = $request->header('Authorization');
