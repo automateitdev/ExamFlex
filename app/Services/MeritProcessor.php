@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\FacadesLog;
 use Illuminate\Support\Facades\Log;
 
 class MeritProcessor
@@ -208,8 +207,18 @@ class MeritProcessor
         Collection $studentDetails
     ): array {
         Log::info("Assigning ranks with merit type: {$meritType}");
-        $isSequential = str_contains(strtolower($meritType), 'sequential');
-        $useGpa = str_contains(strtolower($meritType), 'grade point') || str_contains(strtolower($meritType), 'gpa');
+        // $isSequential = str_contains(strtolower($meritType), 'sequential');
+        // $useGpa = str_contains(strtolower($meritType), 'grade point') || str_contains(strtolower($meritType), 'gpa');
+
+        $normalizedMeritType = strtolower(trim($meritType));
+
+        $isSequential =
+            !str_contains($normalizedMeritType, 'non-sequential') &&
+            !str_contains($normalizedMeritType, 'non sequential');
+
+        $useGpa =
+            str_contains($normalizedMeritType, 'grade point') ||
+            str_contains($normalizedMeritType, 'gpa');
 
         $ranked = [];
         $lastRank = 0;
