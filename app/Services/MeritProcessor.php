@@ -229,15 +229,46 @@ class MeritProcessor
             $totalMark = $student['total_mark_with_optional'];
             $gpa       = (float) ($student['gpa_with_optional'] ?? $student['gpa'] ?? 0);
 
+            // if ($isSequential) {
+            //     $currentRank = $index + 1;
+            // } else {
+            //     if ($index === 0) {
+            //         $currentRank = 1;
+            //     } else {
+            //         // If the primary and secondary metrics are identical, they share the rank
+            //         $isSameAsPrev = ($gpa == $prevMetrics['gpa'] && $totalMark == $prevMetrics['total_mark']);
+            //         $currentRank = $isSameAsPrev ? $lastRank : ($index + 1);
+            //     }
+            // }
             if ($isSequential) {
+
+                // Sequential Ranking
                 $currentRank = $index + 1;
             } else {
+
+                // Non-Sequential Ranking (Dense Ranking)
+
                 if ($index === 0) {
+
                     $currentRank = 1;
                 } else {
-                    // If the primary and secondary metrics are identical, they share the rank
-                    $isSameAsPrev = ($gpa == $prevMetrics['gpa'] && $totalMark == $prevMetrics['total_mark']);
-                    $currentRank = $isSameAsPrev ? $lastRank : ($index + 1);
+
+                    // Total Mark Based
+                    if (!$isGradePointBased) {
+
+                        $isSameAsPrev =
+                            ($totalMark == $prevMetrics['total_mark']);
+                    } else {
+
+                        // Grade Point Based
+                        $isSameAsPrev =
+                            ($gpa == $prevMetrics['gpa']);
+                    }
+
+                    // IMPORTANT FIX
+                    $currentRank = $isSameAsPrev
+                        ? $lastRank
+                        : ($lastRank + 1);
                 }
             }
 
@@ -342,16 +373,37 @@ class MeritProcessor
                     $primary = $useGpa ? $gpa : $totalMark;
 
                     if ($isSequential) {
+
+                        // Sequential Ranking
                         $currentRank = $index + 1;
                     } else {
+
+                        // Non-Sequential Ranking (Dense Ranking)
+
                         if ($index === 0) {
+
                             $currentRank = 1;
-                        } elseif ($primary < $lastPrimary) {
-                            $currentRank = $index + 1;
                         } else {
-                            $currentRank = $lastRank;
+
+                            $isSameAsPrev = ($primary == $lastPrimary);
+
+                            // IMPORTANT FIX
+                            $currentRank = $isSameAsPrev
+                                ? $lastRank
+                                : ($lastRank + 1);
                         }
                     }
+                    // if ($isSequential) {
+                    //     $currentRank = $index + 1;
+                    // } else {
+                    //     if ($index === 0) {
+                    //         $currentRank = 1;
+                    //     } elseif ($primary < $lastPrimary) {
+                    //         $currentRank = $index + 1;
+                    //     } else {
+                    //         $currentRank = $lastRank;
+                    //     }
+                    // }
 
                     $lastRank = $currentRank;
                     $lastPrimary = $primary;
