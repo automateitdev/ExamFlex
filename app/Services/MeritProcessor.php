@@ -212,13 +212,9 @@ class MeritProcessor
 
         $normalizedMeritType = strtolower(trim($meritType));
 
-        $isSequential =
-            !str_contains($normalizedMeritType, 'non-sequential') &&
-            !str_contains($normalizedMeritType, 'non sequential');
+        $isSequential = str_contains($normalizedMeritType, '(sequential)');
 
-        $useGpa =
-            str_contains($normalizedMeritType, 'grade point') ||
-            str_contains($normalizedMeritType, 'gpa');
+        $isGradePointBased = str_contains($normalizedMeritType, 'grade point');
 
         $ranked = [];
         $lastRank = 0;
@@ -279,7 +275,12 @@ class MeritProcessor
     ): array {
 
         Log::info("Assigning ranks with merit type: {$meritType}");
-        $isSequential = str_contains(strtolower($meritType), 'sequential');
+        $normalizedMeritType = strtolower(trim($meritType));
+
+        $isSequential = str_contains($normalizedMeritType, '(sequential)');
+
+        $isGradePointBased = str_contains($normalizedMeritType, 'grade point');
+        // $isSequential = str_contains(strtolower($meritType), 'sequential');
         $useGpa = str_contains(strtolower($meritType), 'grade point') || str_contains(strtolower($meritType), 'gpa');
 
         Log::info("===== RANKING BY FIELD: {$field} =====", ['total_students' => $results->count(), 'gpa_based' => $useGpa, 'sequential' => $isSequential]);
