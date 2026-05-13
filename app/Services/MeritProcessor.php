@@ -207,6 +207,7 @@ class MeritProcessor
         Collection $academicDetails,
         Collection $studentDetails
     ): array {
+        Log::info("Assigning ranks with merit type: {$meritType}");
         $isSequential = str_contains(strtolower($meritType), 'sequential');
         $useGpa = str_contains(strtolower($meritType), 'grade point') || str_contains(strtolower($meritType), 'gpa');
 
@@ -215,7 +216,7 @@ class MeritProcessor
         $prevMetrics = null;
 
         foreach ($sorted as $index => $student) {
-           
+
             $stdId = $student['student_id'];
             $acad  = $academicDetails[$stdId] ?? [];
             $std   = $studentDetails[$stdId] ?? [];
@@ -268,6 +269,7 @@ class MeritProcessor
         Collection $studentDetails
     ): array {
 
+        Log::info("Assigning ranks with merit type: {$meritType}");
         $isSequential = str_contains(strtolower($meritType), 'sequential');
         $useGpa = str_contains(strtolower($meritType), 'grade point') || str_contains(strtolower($meritType), 'gpa');
 
