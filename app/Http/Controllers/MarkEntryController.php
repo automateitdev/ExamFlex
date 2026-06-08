@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use App\Services\ExamService;
+use App\Http\Controllers\Controller;
 use App\Models\TempExamConfig;
+use App\Services\ExamMarkCalculator;
+use App\Services\ExamService;
 use App\Services\MeritProcessor;
 use App\Services\ResultCalculator;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
-use App\Services\ExamMarkCalculator;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class MarkEntryController extends Controller
 {
@@ -251,9 +251,9 @@ class MarkEntryController extends Controller
     {
         // if($request->institute_id == 10221){
 
-        // Log::channel('merit_log')->info('Merit Process Request', [
-        //     'request' => $request->all()
-        // ]);
+        Log::channel('merit_log')->info('Merit Process Request', [
+            'request' => $request->all()
+        ]);
 
 
         $authHeader = $request->header('Authorization');
