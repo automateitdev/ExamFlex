@@ -285,100 +285,6 @@ class ResultCalculator
         ];
     }
 
-    // private function processCombinedGroup($group, $gradeRules, $mark_configs)
-    // {
-    //     $combinedId   = $group->first()['combined_id'];
-    //     $combinedName = $group->first()['combined_subject_name'];
-
-    //     $totalObtained = 0;    // Sum of parts' final_mark (converted + grace)
-    //     $totalMaxMark  = 0;    // Sum of parts' converted max
-    //     $anyPartFailed = false; // To track if any specific paper is an absolute Fail
-
-    //     $parts = $group->map(function ($mark) use ($mark_configs, &$totalObtained, &$totalMaxMark, &$anyPartFailed) {
-    //         $method = '';
-    //         $subjectId = $mark['subject_id'];
-    //         $config    = $mark_configs[$subjectId] ?? [];
-    //         $partMarks = $mark['part_marks'] ?? [];
-
-    //         $convertedMark = 0.0;
-    //         $thisPaperConvertedMax = 0.0;
-
-    //         foreach ($partMarks as $code => $obtained) {
-    //             $method = $config['method_of_evaluation'][$code] ?? 'At Actual';
-    //             $conversion = (float) ($config['conversion'][$code] ?? 100) / 100.0;
-    //             $totalPart  = (float) ($config['total_marks'][$code] ?? 0);
-
-    //             $converted = $obtained * $conversion;
-    //             $maxConverted = $totalPart * $conversion;
-
-    //             $convertedMark += round2(roundMark($converted, $method));
-    //             $thisPaperConvertedMax += round2(roundMark($maxConverted, $method));
-    //         }
-
-    //         $grace = (float) ($mark['grace_mark'] ?? 0);
-    //         $finalMark = round2(roundMark($convertedMark + $grace, $method));
-
-    //         // Accumulate combined totals
-    //         $totalObtained += $finalMark;
-    //         $totalMaxMark  += $thisPaperConvertedMax;
-
-    //         // Check if this specific paper is marked as Fail (Grade F)
-    //         if (($mark['grade'] ?? '') === 'F') {
-    //             $anyPartFailed = true;
-    //         }
-
-    //         return [
-    //             'subject_id'        => $subjectId,
-    //             'subject_name'      => $mark['subject_name'],
-    //             'part_marks'        => $partMarks,
-    //             'total_marks'       => collect($partMarks)->sum(),
-    //             'converted_mark'    => $convertedMark,
-    //             'final_mark'        => $finalMark,
-    //             'grace_mark'        => $grace,
-    //             'grade'             => $mark['grade'] ?? null,
-    //             'grade_point'       => format2($mark['grade_point'] ?? 0),
-    //             'attendance_status' => $mark['attendance_status'] ?? null,
-    //         ];
-    //     })->values()->toArray();
-
-    //     // 1. Calculate raw percentage
-    //     $rawPercentage = $totalMaxMark > 0 ? ($totalObtained / $totalMaxMark) * 100 : 0;
-
-    //     // 2. Round the percentage to handle precision gaps (e.g., 49.5 becomes 50)
-    //     // This ensures it matches the "from_mark" and "to_mark" in your grade_rules
-    //     $lookupPercentage = round($rawPercentage);
-
-    //     // 3. Determine grade from rounded percentage
-    //     $combinedGradePoint = $this->getGradePoint($lookupPercentage, $gradeRules);
-    //     $combinedGrade      = $this->getGrade($lookupPercentage, $gradeRules);
-
-    //     /**
-    //      * Optional: Strict Individual Pass Policy
-    //      * If your school requires passing BOTH papers individually, uncomment the lines below:
-    //      * * if ($anyPartFailed) {
-    //      * $combinedGradePoint = 0.00;
-    //      * $combinedGrade = 'F';
-    //      * }
-    //      */
-
-    //     $combinedStatus = ($combinedGrade === 'F') ? 'Fail' : 'Pass';
-
-    //     return [
-    //         'combined_id'           => $combinedId,
-    //         'is_combined'           => true,
-    //         'combined_name'         => $combinedName,
-    //         'total_marks'           => $totalObtained,
-    //         'final_mark'            => $totalObtained,
-    //         'total_max_mark'        => $totalMaxMark,
-    //         'percentage'            => $rawPercentage, // Keep raw for display
-    //         'combined_grade_point'  => format2($combinedGradePoint),
-    //         'combined_grade'        => $combinedGrade,
-    //         'combined_status'       => $combinedStatus,
-    //         'parts'                 => $parts,
-    //         'is_uncountable'        => false,
-    //     ];
-    // }
-
     private function processCombinedGroup($group, $gradeRules, $mark_configs)
     {
         $combinedId   = $group->first()['combined_id'];
@@ -417,6 +323,10 @@ class ResultCalculator
                 $combinedPassRequirements[$code] = ($combinedPassRequirements[$code] ?? 0) + $passMark;
             }
 
+            // ✅ FIX: accumulation শেষে একবার round2 করুন
+            $convertedMark         = round2($convertedMark);
+            $thisPaperConvertedMax = round2($thisPaperConvertedMax);
+
             $grace = (float) ($mark['grace_mark'] ?? 0);
             $finalMark = round2(roundMark($convertedMark + $grace, $method));
 
@@ -428,7 +338,7 @@ class ResultCalculator
                 'subject_name'      => $mark['subject_name'],
                 'part_marks'        => $partMarks,
                 'total_marks'       => collect($partMarks)->sum(),
-                'converted_mark'    => $convertedMark,
+                'converted_mark'    => round2($convertedMark),
                 'final_mark'        => $finalMark,
                 'grace_mark'        => $grace,
                 'grade'             => $mark['grade'] ?? null,
