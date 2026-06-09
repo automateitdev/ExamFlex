@@ -271,7 +271,7 @@ class ResultCalculator
             'subject_name'   => $subj['subject_name'],
             'part_marks'     => $partMarks,
             'total_marks'    => $totalMarks,
-            'converted_mark' => $convertedMark,
+            'converted_mark' => round2($convertedMark),
             'final_mark'     => $finalMark,
             'grace_mark'     => $grace,
             'percentage'     => $rawPercentage, // Keep raw for display/transcripts
