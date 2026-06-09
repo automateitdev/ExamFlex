@@ -250,7 +250,11 @@ class ResultCalculator
         // $gradePoint = $this->getGradePoint($lookupPercentage, $gradeRules);
         // $grade      = $this->getGrade($lookupPercentage, $gradeRules);
 
-        $rawPercentage = $totalMaxConverted > 0 ? ($finalMark / $totalMaxConverted) * 100 : 0;
+        // $rawPercentage = $totalMaxConverted > 0 ? ($finalMark / $totalMaxConverted) * 100 : 0;
+
+        $rawPercentage = $totalMaxConverted > 0
+            ? round(($finalMark / $totalMaxConverted) * 100, 2)  // ✅ round to 2 decimal places
+            : 0;
         $lookupPercentage = round($rawPercentage);
 
         // ✅ FIX: Check if ExamMarkCalculator already marked this as Fail
