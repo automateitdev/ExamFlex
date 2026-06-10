@@ -225,6 +225,7 @@ class ResultCalculator
         $totalMarks = collect($partMarks)->sum();
 
         $convertedMark = 0;
+        $totalMaxConverted = 0;
         $method = '';
 
         foreach ($partMarks as $code => $obtained) {
@@ -233,12 +234,20 @@ class ResultCalculator
             $converted = $obtained * ($conversion / 100);
 
             $convertedMark += round2(roundMark($converted, $method));
+
+            // ✅ FIX: max mark ও same conversion দিয়ে calculate করুন
+            $totalPart = (float) ($config['total_marks'][$code] ?? 0);
+            $maxConverted = $totalPart * ($conversion / 100);
+            $totalMaxConverted += round2(roundMark($maxConverted, $method));
         }
+
+        $convertedMark = round2($convertedMark);       // ✅ accumulation শেষে round
+        $totalMaxConverted = round2($totalMaxConverted); // ✅ accumulation শেষে round
 
         $grace = $subj['grace_mark'] ?? 0;
         $finalMark = round2(roundMark($convertedMark + $grace, $method));
 
-        $totalMaxConverted = collect($config['total_marks'] ?? [])->sum();
+        // $totalMaxConverted = collect($config['total_marks'] ?? [])->sum();
 
         // // 1. Calculate raw percentage
         // $rawPercentage = $totalMaxConverted > 0 ? ($finalMark / $totalMaxConverted) * 100 : 0;
