@@ -327,7 +327,7 @@ class MeritProcessor
     ): array {
         $ranked   = [];
         $lastRank = 0;
-        $tieCount = 0;          // how many students share the current rank
+        // $tieCount = 0;          // how many students share the current rank
         $lastPrimary = null;
 
         foreach ($sorted as $index => $student) {
@@ -347,16 +347,15 @@ class MeritProcessor
                 // Non-Sequential (standard competition / dense ranking)
                 if ($index === 0) {
                     $currentRank = 1;
-                    $tieCount    = 1;
+                    // $tieCount    = 1;
                 } elseif ($this->floatEquals($primary, $lastPrimary)) {
                     // Same metric → same rank, increment tie counter
                     $currentRank = $lastRank;
-                    $tieCount++;
+                    // $tieCount++;
                 } else {
                     // Different metric → next rank = lastRank + tieCount
-                    // (standard competition: 1,1,3 not 1,1,2)
-                    $currentRank = $lastRank + $tieCount;
-                    $tieCount    = 1;
+                    // (standard competition: 1,1,2)
+                    $currentRank = $lastRank + 1;
                 }
                 $lastRank = $currentRank;
             }
