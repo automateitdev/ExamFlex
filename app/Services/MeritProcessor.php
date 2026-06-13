@@ -330,7 +330,10 @@ class MeritProcessor
         // $tieCount = 0;          // how many students share the current rank
         $lastPrimary = null;
 
-        foreach ($sorted as $index => $student) {
+        $rankCounter = 0;
+        foreach ($sorted as $student) {
+            $rankCounter++;
+
             $stdId     = $student['student_id'];
             $acad      = $academicDetails[$stdId] ?? [];
             $std       = $studentDetails[$stdId]  ?? [];
@@ -341,11 +344,11 @@ class MeritProcessor
 
             if ($sequential) {
                 // Sequential: rank = 1,2,3,4,... (no duplicates)
-                $currentRank = $index + 1;
+                $currentRank = $$rankCounter++;;
                 $lastRank    = $currentRank;
             } else {
                 // Non-Sequential (standard competition / dense ranking)
-                if ($index === 0) {
+                if ($$rankCounter === 1) {
                     $currentRank = 1;
                     // $tieCount    = 1;
                 } elseif ($this->floatEquals($primary, $lastPrimary)) {
