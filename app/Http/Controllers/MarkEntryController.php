@@ -29,9 +29,9 @@ class MarkEntryController extends Controller
 
     public function storeConfig(Request $request)
     {
-        Log::channel('mark_entry_log')->info('Mark Entry Config Request', [
-            'request' => $request->all()
-        ]);
+        // Log::channel('mark_entry_log')->info('Mark Entry Config Request', [
+        //     'request' => $request->all()
+        // ]);
 
         $data = $request->all();
 
@@ -91,10 +91,10 @@ class MarkEntryController extends Controller
 
         $tempId = 'temp_' . Str::random(12);
 
-        Log::channel('mark_entry_log')->info('Generated Temp ID for Config', [
-            'temp_id' => $tempId,
-            'institute_id' => $data['institute_id']
-        ]);
+        // Log::channel('mark_entry_log')->info('Generated Temp ID for Config', [
+        //     'temp_id' => $tempId,
+        //     'institute_id' => $data['institute_id']
+        // ]);
         TempExamConfig::create([
             'temp_id' => $tempId,
             'institute_id' => $data['institute_id'],
@@ -116,9 +116,9 @@ class MarkEntryController extends Controller
 
     public function processStudents(Request $request)
     {
-        Log::channel('mark_entry_log')->info('Mark Calculation Request', [
-            'request' => $request->all()
-        ]);
+        // Log::channel('mark_entry_log')->info('Mark Calculation Request', [
+        //     'request' => $request->all()
+        // ]);
 
         $authHeader = $request->header('Authorization');
         if (!$authHeader || !str_starts_with($authHeader, 'Basic ')) {
@@ -195,9 +195,9 @@ class MarkEntryController extends Controller
     //result process
     public function resultProcess(Request $request)
     {
-        Log::channel('exam_flex_log')->info('Result Process Request', [
-            'request' => $request->all()
-        ]);
+        // Log::channel('exam_flex_log')->info('Result Process Request', [
+        //     'request' => $request->all()
+        // ]);
 
         $authHeader = $request->header('Authorization');
         if (!$authHeader || !str_starts_with($authHeader, 'Basic ')) {
@@ -236,9 +236,9 @@ class MarkEntryController extends Controller
         $results = app(ResultCalculator::class)->calculate($request->all());
         // $results = App\\Services\\ResultCalculator->calculate($request->all());
 
-        Log::channel('exam_flex_log')->info('Result Process Result', [
-            'results' => $results
-        ]);
+        // Log::channel('exam_flex_log')->info('Result Process Result', [
+        //     'results' => $results
+        // ]);
         return response()->json([
             'status' => 'success',
             'message' => 'Marks Calculated Successfully',
@@ -251,9 +251,9 @@ class MarkEntryController extends Controller
     {
         // if($request->institute_id == 10221){
 
-        Log::channel('merit_log')->info('Merit Process Request', [
-            'request' => $request->all()
-        ]);
+        // Log::channel('merit_log')->info('Merit Process Request', [
+        //     'request' => $request->all()
+        // ]);
 
 
         $authHeader = $request->header('Authorization');
