@@ -356,6 +356,9 @@ class ResultCalculator
             ];
         })->values()->toArray();
 
+        $totalObtained = round2($totalObtained);
+        $totalMaxMark  = round2($totalMaxMark);
+
         // 1. Calculate base Grade/GP from total percentage
         $rawPercentage = $totalMaxMark > 0 ? ($totalObtained / $totalMaxMark) * 100 : 0;
         $lookupPercentage = round($rawPercentage);
@@ -384,10 +387,10 @@ class ResultCalculator
             'combined_id'           => $combinedId,
             'is_combined'           => true,
             'combined_name'         => $combinedName,
-            'total_marks'           => $totalObtained,
-            'final_mark'            => $totalObtained,
-            'total_max_mark'        => $totalMaxMark,
-            'percentage'            => $rawPercentage,
+            'total_marks'           => round2($totalObtained), // ✅
+            'final_mark'            => round2($totalObtained), // ✅
+            'total_max_mark'        => round2($totalMaxMark),  // ✅
+            'percentage'            => round2($rawPercentage),
             'combined_grade_point'  => format2($combinedGradePoint),
             'combined_grade'        => $combinedGrade,
             'combined_status'       => $combinedStatus,
