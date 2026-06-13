@@ -281,7 +281,7 @@ class ResultCalculator
             'part_marks'     => $partMarks,
             'total_marks'    => $totalMarks,
             'converted_mark' => round2($convertedMark),
-            'final_mark'     => $finalMark,
+            'final_mark'     => round2($finalMark),
             'grace_mark'     => $grace,
             'percentage'     => $rawPercentage, // Keep raw for display/transcripts
 
