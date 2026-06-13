@@ -344,11 +344,11 @@ class MeritProcessor
 
             if ($sequential) {
                 // Sequential: rank = 1,2,3,4,... (no duplicates)
-                $currentRank = $$rankCounter++;;
+                $currentRank = $rankCounter++;;
                 $lastRank    = $currentRank;
             } else {
                 // Non-Sequential (standard competition / dense ranking)
-                if ($$rankCounter === 1) {
+                if ($rankCounter === 1) {
                     $currentRank = 1;
                     // $tieCount    = 1;
                 } elseif ($this->floatEquals($primary, $lastPrimary)) {
