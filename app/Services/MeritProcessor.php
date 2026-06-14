@@ -63,9 +63,17 @@ class MeritProcessor
                 'all_students' => $allRanked,
 
                 // SECTION WISE
-                'section_wise' => $this->rankByField(
-                    $results, // ← pass original results, not ranked
-                    'section',
+                // 'section_wise' => $this->rankByField(
+                //     $results, // ← pass original results, not ranked
+                //     'section',
+                //     $meritType,
+                //     $academicDetails,
+                //     $studentDetails
+                // ),
+                // SECTION WISE — shift+section composite
+                // SECTION WISE
+                'section_wise' => $this->rankBySectionField(
+                    $results,
                     $meritType,
                     $academicDetails,
                     $studentDetails
@@ -254,7 +262,6 @@ class MeritProcessor
             $aRoll = $academicDetails[$a['student_id']]['class_roll'] ?? PHP_INT_MAX;
             $bRoll = $academicDetails[$b['student_id']]['class_roll'] ?? PHP_INT_MAX;
             return $aRoll <=> $bRoll;
-
         })->values();
     }
 
@@ -297,7 +304,6 @@ class MeritProcessor
             $aRoll = $academicDetails[$a['student_id']]['class_roll'] ?? PHP_INT_MAX;
             $bRoll = $academicDetails[$b['student_id']]['class_roll'] ?? PHP_INT_MAX;
             return $aRoll <=> $bRoll;
-
         })->values();
     }
 
@@ -439,7 +445,10 @@ class MeritProcessor
         return $results
             ->groupBy(fn($s) => $academicDetails[$s['student_id']][$field] ?? 'unknown')
             ->flatMap(function (Collection $groupStudents) use (
-                $sequential, $gpaPriority, $academicDetails, $studentDetails
+                $sequential,
+                $gpaPriority,
+                $academicDetails,
+                $studentDetails
             ) {
                 $sorted = $this->sortGroup($groupStudents, $gpaPriority, $academicDetails);
 
@@ -502,5 +511,45 @@ class MeritProcessor
         }
 
         return $output;
+    }
+
+    // ─────────────────────────────────────────────
+    // SECTION WISE RANKING (shift + section composite, flat output)
+    // ─────────────────────────────────────────────
+
+    private function rankBySectionField(
+        Collection $results,
+        string $meritType,
+        Collection $academicDetails,
+        Collection $studentDetails
+    ): array {
+        $sequential  = $this->isSequential($meritType);
+        $gpaPriority = $this->isGradePointBased($meritType);
+
+        return $results
+            ->groupBy(function ($s) use ($academicDetails) {
+                $acad = $academicDetails[$s['student_id']] ?? [];
+                $shift   = $acad['shift']   ?? 'Unknown';
+                $section = $acad['section'] ?? 'Unknown';
+                return "{$shift}-{$section}"; // e.g. "Morning-A", "Day-B"
+            })
+            ->flatMap(function (Collection $groupStudents) use (
+                $sequential,
+                $gpaPriority,
+                $academicDetails,
+                $studentDetails
+            ) {
+                $sorted = $this->sortGroup($groupStudents, $gpaPriority, $academicDetails);
+
+                return $this->doRankAssignment(
+                    $sorted,
+                    $sequential,
+                    $gpaPriority,
+                    $academicDetails,
+                    $studentDetails
+                );
+            })
+            ->values()
+            ->toArray();
     }
 }
