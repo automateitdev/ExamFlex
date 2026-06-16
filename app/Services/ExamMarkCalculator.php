@@ -34,7 +34,7 @@ class ExamMarkCalculator
         $examName       = $subject['exam_name'] ?? 'Semester Exam';
         $subjectName    = $subject['subject_name'] ?? null;
         $attendanceReq  = $subject['attendance_required'] ?? false;
-        $method         = $subject['method_of_evaluation'] ?? 'At Actual';
+        // $method         = $subject['method_of_evaluation'] ?? 'At Actual';
 
         /* =====================================================
          | ABSENT CHECK (UNCHANGED)
@@ -127,8 +127,20 @@ class ExamMarkCalculator
 
         if ($hasOverall) {
             foreach ($details as $d) {
-                $overallCalc += ($partMarks[$d['exam_code_title']] ?? 0)
-                    * (($d['conversion'] ?? 100) / 100);
+                // $overallCalc += ($partMarks[$d['exam_code_title']] ?? 0)
+                //     * (($d['conversion'] ?? 100) / 100);
+                $got = (float) ($partMarks[$d['exam_code_title']] ?? 0);
+
+                $conversion = ((float) ($d['conversion'] ?? 100)) / 100;
+
+                $method = $d['method_of_evaluation'] ?? 'At Actual';
+
+                $overallCalc += round2(
+                    roundMark(
+                        $got * $conversion,
+                        $method
+                    )
+                );
             }
 
             $overallRequired = $overallDetail['overall_mark'];
@@ -156,7 +168,7 @@ class ExamMarkCalculator
           | Only applies if student is failing and grace can make them pass
           ===================================================== */
         $appliedGrace = 0;
-        $finalMark = $obtainedMark;
+        $finalMark = $convertedMark;
         $passBeforeGrace = $pass;
 
         if (!$passBeforeGrace && $graceMark > 0 && $hasOverall) {
