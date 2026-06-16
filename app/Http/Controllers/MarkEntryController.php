@@ -42,59 +42,10 @@ class MarkEntryController extends Controller
         }
         $client = $authResult;
 
-        // $credentials = base64_decode(substr($authHeader, 6));
-        // [$username, $password] = explode(':', $credentials, 2);
-
-        // $client = DB::table('client_domains')
-        //     ->where('username', $username)
-        //     ->first();
-
-        // if (!$client || !Hash::check($password, $client->password_hash)) {
-        //     return response()->json(['error' => 'Unauthorized'], 401);
-        // }
-
-        // $validator = Validator::make($request->all(), [
-        //     'institute_id' => 'required|string|max:50',
-        //     'exam_type' => 'required|in:semester,class test',
-        //     'subjects' => 'required|array|min:1',
-        //     'subjects.*.subject_id' => 'required|integer',
-        //     'subjects.*.subject_name' => 'required|string',
-        //     'subjects.*.exam_name' => 'required|string',
-        //     'subjects.*.grace_mark' => 'required|numeric|min:0',
-        //     'subjects.*.method_of_evaluation' => 'required|in:At Actual,Converted',
-        //     'subjects.*.attendance_required' => 'required|boolean',
-        //     'subjects.*.highest_fail_mark' => 'nullable|numeric|min:0',
-        //     'subjects.*.exam_config' => 'required|array|min:1',
-        //     'subjects.*.exam_config.*.exam_code_title' => 'required|string|in:CQ,MCQ,SBA,Practical',
-        //     'subjects.*.exam_config.*.total_mark' => 'required|numeric|min:1',
-        //     'subjects.*.exam_config.*.pass_mark' => 'required|numeric|min:0',
-        //     'subjects.*.exam_config.*.conversion' => 'required|numeric|min:1|max:100',
-        //     'subjects.*.exam_config.*.is_individual' => 'required|boolean',
-        //     'subjects.*.exam_config.*.is_overall' => 'required|boolean',
-        //     'grade_points' => 'required|array|min:1',
-        //     'grade_points.*.from_mark' => 'required|numeric|min:0',
-        //     'grade_points.*.to_mark' => 'required|numeric|min:0',
-        //     'grade_points.*.grade' => 'required|string|max:10',
-        //     'grade_points.*.grade_point' => 'required|numeric|min:0',
-        // ]);
-
-        // if ($validator->fails()) {
-        //     Log::channel('exam_flex_log')->warning('Config Validation Failed', [
-        //         'errors' => $validator->errors()->toArray()
-        //     ]);
-        //     return response()->json([
-        //         'error' => 'Validation failed',
-        //         'details' => $validator->errors()
-        //     ], 422);
-        // }
         DB::enableQueryLog();
 
         $tempId = 'temp_' . Str::random(12);
 
-        // Log::channel('mark_entry_log')->info('Generated Temp ID for Config', [
-        //     'temp_id' => $tempId,
-        //     'institute_id' => $data['institute_id']
-        // ]);
         TempExamConfig::create([
             'temp_id' => $tempId,
             'institute_id' => $data['institute_id'],
@@ -136,25 +87,6 @@ class MarkEntryController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // $validator = Validator::make($request->all(), [
-        //     'temp_id' => 'required|string|size:17',
-        //     'students' => 'required|array|min:1|max:1000',
-        //     'students.*.student_id' => 'required|integer|min:1',
-        //     'students.*.part_marks' => 'required|array',
-        //     'students.*.part_marks.CQ' => 'required|numeric|min:0|max:100',
-        //     'students.*.part_marks.MCQ' => 'required|numeric|min:0|max:100',
-        //     'students.*.attendance_status' => 'nullable|in:present,absent',
-        // ]);
-
-        // if ($validator->fails()) {
-        //     Log::channel('exam_flex_log')->warning('Process Validation Failed', [
-        //         'errors' => $validator->errors()->toArray()
-        //     ]);
-        //     return response()->json([
-        //         'error' => 'Validation failed',
-        //         'details' => $validator->errors()
-        //     ], 422);
-        // }
 
         $temp = TempExamConfig::where('temp_id', $request->temp_id)
             ->where('expires_at', '>', now())

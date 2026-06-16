@@ -34,6 +34,7 @@ class ExamMarkCalculator
         $examName       = $subject['exam_name'] ?? 'Semester Exam';
         $subjectName    = $subject['subject_name'] ?? null;
         $attendanceReq  = $subject['attendance_required'] ?? false;
+        $method         = $subject['method_of_evaluation'] ?? 'At Actual';
 
         /* =====================================================
          | ABSENT CHECK (UNCHANGED)
@@ -43,19 +44,38 @@ class ExamMarkCalculator
             return $this->absentResult($studentId, $partMarks, $examName, $subjectName);
         }
 
+        // $obtainedMark = 0;
+        // $totalMaxMark = 0;
+
+        // foreach ($details as $d) {
+        //     $got = $partMarks[$d['exam_code_title']] ?? 0;
+        //     $conversion = ($d['conversion'] ?? 100) / 100;
+        //     $total = $d['total_mark'] ?? 0;
+
+        //     $obtainedMark += $got * $conversion;
+        //     $totalMaxMark += $total * $conversion;
+        // }
         /* =====================================================
-         | 1. CONVERTED MARK CALCULATION (UNCHANGED)
+         | 1. CONVERTED MARK CALCULATION
          ===================================================== */
         $obtainedMark = 0;
         $totalMaxMark = 0;
 
+        // We need to store individual rounded parts if you need them for
+        // individual pass checks, but for total, we round the contribution
         foreach ($details as $d) {
             $got = $partMarks[$d['exam_code_title']] ?? 0;
             $conversion = ($d['conversion'] ?? 100) / 100;
             $total = $d['total_mark'] ?? 0;
 
-            $obtainedMark += $got * $conversion;
-            $totalMaxMark += $total * $conversion;
+            // Calculate contribution of this specific part
+            $partValue = $got * $conversion;
+
+            // Apply the rounding method defined in the subject config
+            $roundedPart = roundMark($partValue, $method);
+
+            $obtainedMark += $roundedPart;
+            $totalMaxMark += ($total * $conversion);
         }
 
         /* =====================================================
