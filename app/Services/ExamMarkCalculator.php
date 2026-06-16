@@ -44,6 +44,9 @@ class ExamMarkCalculator
             return $this->absentResult($studentId, $partMarks, $examName, $subjectName);
         }
 
+        /* =====================================================
+         | 1. CONVERTED MARK CALCULATION (UNCHANGED)
+         ===================================================== */
         // $obtainedMark = 0;
         // $totalMaxMark = 0;
 
@@ -55,28 +58,41 @@ class ExamMarkCalculator
         //     $obtainedMark += $got * $conversion;
         //     $totalMaxMark += $total * $conversion;
         // }
-        /* =====================================================
-         | 1. CONVERTED MARK CALCULATION
-         ===================================================== */
-        $obtainedMark = 0;
+        $obtainedMark = 0;       // Raw marks (17+22+12=51)
+        $convertedMark = 0;      // After conversion + evaluation method
         $totalMaxMark = 0;
 
-        // We need to store individual rounded parts if you need them for
-        // individual pass checks, but for total, we round the contribution
         foreach ($details as $d) {
-            $got = $partMarks[$d['exam_code_title']] ?? 0;
-            $conversion = ($d['conversion'] ?? 100) / 100;
-            $total = $d['total_mark'] ?? 0;
 
-            // Calculate contribution of this specific part
-            $partValue = $got * $conversion;
+            $got = (float) ($partMarks[$d['exam_code_title']] ?? 0);
 
-            // Apply the rounding method defined in the subject config
-            $roundedPart = roundMark($partValue, $method);
+            $conversion = ((float) ($d['conversion'] ?? 100)) / 100;
 
-            $obtainedMark += $roundedPart;
-            $totalMaxMark += ($total * $conversion);
+            $total = (float) ($d['total_mark'] ?? 0);
+
+            $method = $d['method_of_evaluation'] ?? 'At Actual';
+
+            // Raw obtained mark
+            $obtainedMark += $got;
+
+            // Converted obtained mark
+            $converted = $got * $conversion;
+
+            $convertedMark += round2(
+                roundMark($converted, $method)
+            );
+
+            // Converted max mark
+            $convertedMax = $total * $conversion;
+
+            $totalMaxMark += round2(
+                roundMark($convertedMax, $method)
+            );
         }
+
+        $obtainedMark  = round2($obtainedMark);
+        $convertedMark = round2($convertedMark);
+        $totalMaxMark  = round2($totalMaxMark);
 
         /* =====================================================
          | 2. CONFIG PRESENCE FLAGS  ✅ NEW
