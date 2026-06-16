@@ -34,7 +34,7 @@ class ExamMarkCalculator
         $examName       = $subject['exam_name'] ?? 'Semester Exam';
         $subjectName    = $subject['subject_name'] ?? null;
         $attendanceReq  = $subject['attendance_required'] ?? false;
-        // $method         = $subject['method_of_evaluation'] ?? 'At Actual';
+        $method         = $subject['method_of_evaluation'] ?? 'At Actual';
 
         /* =====================================================
          | ABSENT CHECK (UNCHANGED)
@@ -70,7 +70,7 @@ class ExamMarkCalculator
 
             $total = (float) ($d['total_mark'] ?? 0);
 
-            $method = $d['method_of_evaluation'] ?? 'At Actual';
+            // $method = $d['method_of_evaluation'] ?? 'At Actual';
 
             // Raw obtained mark
             $obtainedMark += $got;
@@ -133,7 +133,7 @@ class ExamMarkCalculator
 
                 $conversion = ((float) ($d['conversion'] ?? 100)) / 100;
 
-                $method = $d['method_of_evaluation'] ?? 'At Actual';
+                // $method = $d['method_of_evaluation'] ?? 'At Actual';
 
                 $overallCalc += round2(
                     roundMark(
