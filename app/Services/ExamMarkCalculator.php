@@ -176,7 +176,7 @@ class ExamMarkCalculator
 
             if ($needed <= $graceMark) {
                 $appliedGrace = $needed;
-                $finalMark = $obtainedMark + $appliedGrace;
+                $finalMark = $convertedMark + $appliedGrace;
                 $pass = true; // Change status to Pass
             }
         }
