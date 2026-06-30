@@ -86,15 +86,10 @@ class ExamMarkCalculator
 
         if ($hasPassMark) {
             foreach ($details->where('pass_mark', '>', 0) as $d) {
-                $got        = (float) ($partMarks[$d['exam_code_title']] ?? 0);
-                $conversion = ((float) ($d['conversion'] ?? 100)) / 100;
-
-                // ✅ converted mark দিয়ে pass_mark check
-                $convertedGot = round2(roundMark($got * $conversion, $method));
-
-                if ($convertedGot < $d['pass_mark']) {
+                $got = $partMarks[$d['exam_code_title']] ?? 0;
+                if ($got < $d['pass_mark']) {
                     $individualPass = false;
-                    $failedParts[]  = "{$d['exam_code_title']} ($convertedGot < {$d['pass_mark']})";
+                    $failedParts[] = "{$d['exam_code_title']} ($got < {$d['pass_mark']})";
                 }
             }
         }
