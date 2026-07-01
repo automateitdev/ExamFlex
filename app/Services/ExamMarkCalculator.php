@@ -101,6 +101,17 @@ class ExamMarkCalculator
         $overallCalc     = 0;
         $overallRequired = 0;
 
+        // if ($hasOverall) {
+        //     foreach ($details as $d) {
+        //         $got        = (float) ($partMarks[$d['exam_code_title']] ?? 0);
+        //         $conversion = ((float) ($d['conversion'] ?? 100)) / 100;
+
+        //         $overallCalc += round2(roundMark($got * $conversion, $method));
+        //     }
+
+        //     $overallRequired = $overallDetail['overall_mark'];
+        //     $overallPass     = $overallCalc >= $overallRequired;
+        // }
         if ($hasOverall) {
             foreach ($details as $d) {
                 $got        = (float) ($partMarks[$d['exam_code_title']] ?? 0);
@@ -109,8 +120,13 @@ class ExamMarkCalculator
                 $overallCalc += round2(roundMark($got * $conversion, $method));
             }
 
-            $overallRequired = $overallDetail['overall_mark'];
-            $overallPass     = $overallCalc >= $overallRequired;
+            // ✅ overall_mark কে percentage হিসেবে treat করুন
+            $overallRequiredPercentage = (float) $overallDetail['overall_mark']; // e.g. 33 (means 33%)
+
+            // ✅ percentage থেকে actual mark বের করুন totalMaxMark এর সাপেক্ষে
+            $overallRequired = round2(($overallRequiredPercentage / 100) * $totalMaxMark);
+
+            $overallPass = $overallCalc >= $overallRequired;
         }
 
         /* =====================================================
