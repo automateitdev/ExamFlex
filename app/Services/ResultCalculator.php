@@ -271,8 +271,8 @@ class ResultCalculator
             $gradePoint = $subj['grade_point'];
             $grade      = $subj['grade'];
         } else {
-            $gradePoint = $this->getGradePoint($lookupPercentage, $gradeRules);
-            $grade      = $this->getGrade($lookupPercentage, $gradeRules);
+            $gradePoint = $this->getGradePoint($rawPercentage, $gradeRules);
+            $grade      = $this->getGrade($rawPercentage, $gradeRules);
         }
 
         return [
