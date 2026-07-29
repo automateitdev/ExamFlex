@@ -194,14 +194,36 @@ class ExamMarkCalculator
         /* =====================================================
          | 9. GRADE RESOLUTION
          ===================================================== */
+        // if ($pass) {
+        //     $gradeInfo = $gradePoints->first(
+        //         fn($g) => $percentage >= $g['from_mark'] && $percentage <= $g['to_mark']
+        //     );
+        // } else {
+        //     $gradeInfo = $gradePoints->first(
+        //         fn($g) => $g['result'] === 'Fail'
+        //     );
+        // }
         if ($pass) {
             $gradeInfo = $gradePoints->first(
                 fn($g) => $percentage >= $g['from_mark'] && $percentage <= $g['to_mark']
             );
+
+            // Gap between integer to_mark boundaries (e.g. 79.2 falls between 79.00 and 80.00)
+            // Find the grade whose to_mark is closest below the percentage
+            if (!$gradeInfo) {
+                $gradeInfo = $gradePoints
+                    ->where('result', '!=', 'Fail')
+                    ->where('from_mark', '<=', $percentage)
+                    ->sortByDesc('from_mark')
+                    ->first();
+            }
         } else {
-            $gradeInfo = $gradePoints->first(
-                fn($g) => $g['result'] === 'Fail'
-            );
+            $gradeInfo = $gradePoints->first(fn($g) => $g['result'] === 'Fail');
+        }
+
+        // Final safety net
+        if (!$gradeInfo) {
+            $gradeInfo = ['grade' => 'F', 'grade_point' => 0.0];
         }
 
         /* =====================================================
