@@ -267,9 +267,16 @@ class ResultCalculator
         $lookupPercentage = round($rawPercentage);
 
         // ✅ FIX: Check if ExamMarkCalculator already marked this as Fail
-        if (($subj['grade'] ?? '') === 'F' || ($subj['result_status'] ?? '') === 'Fail') {
-            $gradePoint = $subj['grade_point'];
-            $grade      = $subj['grade'];
+        // if (($subj['grade'] ?? '') === 'F' || ($subj['result_status'] ?? '') === 'Fail') {
+        //     $gradePoint = $subj['grade_point'];
+        //     $grade      = $subj['grade'];
+        // } else {
+        //     $gradePoint = $this->getGradePoint($rawPercentage, $gradeRules);
+        //     $grade      = $this->getGrade($rawPercentage, $gradeRules);
+        // }
+        if ($subj['individual_pass_failed'] ?? false) {
+            $gradePoint = 0.00;
+            $grade      = 'F';
         } else {
             $gradePoint = $this->getGradePoint($rawPercentage, $gradeRules);
             $grade      = $this->getGrade($rawPercentage, $gradeRules);
