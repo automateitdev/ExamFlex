@@ -274,7 +274,25 @@ class ResultCalculator
         //     $gradePoint = $this->getGradePoint($rawPercentage, $gradeRules);
         //     $grade      = $this->getGrade($rawPercentage, $gradeRules);
         // }
-        if ($subj['individual_pass_failed'] ?? false) {
+        // if ($subj['individual_pass_failed'] ?? false) {
+        //     $gradePoint = 0.00;
+        //     $grade      = 'F';
+        // } else {
+        //     $gradePoint = $this->getGradePoint($rawPercentage, $gradeRules);
+        //     $grade      = $this->getGrade($rawPercentage, $gradeRules);
+        // }
+        $failedIndividual = false;
+
+        if (isset($subj['individual_pass_failed'])) {
+            $failedIndividual = (bool) $subj['individual_pass_failed'];
+        } elseif (($subj['result_status'] ?? '') === 'Fail' || ($subj['grade'] ?? '') === 'F') {
+            // If grace mark wasn't applied to pass them, respect the fail status
+            if (!($grace > 0)) {
+                $failedIndividual = true;
+            }
+        }
+
+        if ($failedIndividual) {
             $gradePoint = 0.00;
             $grade      = 'F';
         } else {
