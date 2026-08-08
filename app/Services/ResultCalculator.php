@@ -281,13 +281,13 @@ class ResultCalculator
         //     $gradePoint = $this->getGradePoint($rawPercentage, $gradeRules);
         //     $grade      = $this->getGrade($rawPercentage, $gradeRules);
         // }
-       
+
 
         return [
             'subject_id'     => $subjectId,
             'subject_name'   => $subj['subject_name'],
             'part_marks'     => $partMarks,
-            'total_marks'    => $totalMarks,
+            'total_marks'    => round2($totalMarks),
             'converted_mark' => round2($convertedMark),
             'final_mark'     => round2($finalMark),
             'grace_mark'     => $grace,
