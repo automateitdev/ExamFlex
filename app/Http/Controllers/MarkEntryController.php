@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\TempExamConfig;
+use App\Services\CombinedResultProcessor;
 use App\Services\ExamMarkCalculator;
 use App\Services\ExamService;
 use App\Services\MeritProcessor;
@@ -234,6 +235,68 @@ class MarkEntryController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Merit Calculated Successfully',
+            'results' => $results
+        ], 202);
+    }
+
+    // Combined exam result process
+    public function combinedResultProcess(Request $request)
+    {
+        // Log::channel('exam_flex_log')->info('Combined Result Process Request', [
+        //     'request' => $request->all()
+        // ]);
+
+        $authHeader = $request->header('Authorization');
+        if (!$authHeader || !str_starts_with($authHeader, 'Basic ')) {
+            return response()->json(['error' => 'Missing or invalid Authorization header'], 401);
+        }
+
+        $credentials = base64_decode(substr($authHeader, 6));
+        [$username, $password] = explode(':', $credentials, 2);
+
+        $client = DB::table('client_domains')
+            ->where('username', $username)
+            ->first();
+
+        if (!$client || !Hash::check($password, $client->password_hash)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'institute_id' => 'required',
+            'result_rules' => 'required|string|in:Average,Percentage',
+            'passing_rules' => 'required|string|in:Last Exam Pass/Fail,Subject Wise Pass/Fail,Average (Short Code),Average (Total)',
+            'exams' => 'required|array|min:1',
+            'exams.*.exam_id' => 'required',
+            'exams.*.sequence' => 'required|integer',
+            'grade_rules' => 'required|array',
+            'mark_configs' => 'required|array',
+            'students' => 'required|array',
+        ]);
+
+        if ($validator->fails()) {
+            Log::channel('exam_flex_log')->warning('Combined Result Process Validation Failed', [
+                'errors' => $validator->errors()->toArray()
+            ]);
+            return response()->json([
+                'error' => 'Validation failed',
+                'details' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $results = app(CombinedResultProcessor::class)->process($request->all());
+        } catch (\Throwable $e) {
+            Log::error('CombinedResultProcessor Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['error' => 'Combined result processing failed'], 500);
+        }
+
+        // Log::channel('exam_flex_log')->info('Combined Result Process Result', [
+        //     'results' => $results
+        // ]);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Combined Result Processed Successfully',
             'results' => $results
         ], 202);
     }
