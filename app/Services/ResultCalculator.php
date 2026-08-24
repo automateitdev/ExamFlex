@@ -128,17 +128,19 @@ class ResultCalculator
                 $single['is_optional'] = ($first['subject_id'] == $optionalId);
                 $merged[] = $single;
 
-                if (!$single['is_uncountable'] && !$single['is_optional']) {
+                $onlyAddToTotal = $single['only_add_to_total'];
+
+                if (!$single['is_uncountable'] && !$single['is_optional'] && !$onlyAddToTotal) {
                     $totalGP += $single['grade_point'];
                     $subjectCount++;
                 }
-                if ($single['grade'] === 'F' && !$single['is_uncountable'] && !$single['is_optional']) {
+                if ($single['grade'] === 'F' && !$single['is_uncountable'] && !$single['is_optional'] && !$onlyAddToTotal) {
                     $failed = true;
                     $totalGP = 0;
                     $totalFailCount++;
                 }
 
-                if (!$single['is_optional'] && !$single['is_uncountable']) {
+                if (!$single['is_optional'] && (!$single['is_uncountable'] || $onlyAddToTotal)) {
                     $totalMarkWithoutOptional += $single['final_mark'];
                 }
 
@@ -297,6 +299,7 @@ class ResultCalculator
             'grade'          => $grade,               // Use newly calculated Grade
 
             'is_uncountable' => ($subj['subject_type'] ?? '') === 'Uncountable',
+            'only_add_to_total' => (bool) ($subj['only_add_to_total'] ?? false),
             'is_combined'    => false,
             'attendance_status' => $subj['attendance_status'] ?? null,
         ];
