@@ -26,3 +26,4 @@ Route::post('/mark-entry/process', [MarkEntryController::class, 'processStudents
 Route::post('result-process', [MarkEntryController::class, 'resultProcess']);
 Route::post('merit-process', [MarkEntryController::class, 'meritProcess']);
 Route::post('/combined-result-process', [MarkEntryController::class, 'combinedResultProcess']);
+Route::post('/combined-merit-process', [MarkEntryController::class, 'combinedMeritProcess']);

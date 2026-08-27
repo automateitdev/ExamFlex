@@ -300,4 +300,65 @@ class MarkEntryController extends Controller
             'results' => $results
         ], 202);
     }
+
+    // Combined exam merit process
+    public function combinedMeritProcess(Request $request)
+    {
+        // Log::channel('merit_log')->info('Combined Merit Process Request', [
+        //     'request' => $request->all()
+        // ]);
+
+        $authHeader = $request->header('Authorization');
+        if (!$authHeader || !str_starts_with($authHeader, 'Basic ')) {
+            return response()->json(['error' => 'Missing or invalid Authorization header'], 401);
+        }
+
+        $credentials = base64_decode(substr($authHeader, 6));
+        [$username, $password] = explode(':', $credentials, 2);
+
+        $client = DB::table('client_domains')
+            ->where('username', $username)
+            ->first();
+
+        if (!$client || !Hash::check($password, $client->password_hash)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'institute_id' => 'required',
+            'exam_name' => 'required|string',
+            'exam_config' => 'required|array',
+            'exam_config.merit_process_type' => 'required|string|in:Total Mark (Sequential),Total Mark (Non-Sequential),Grade Point (Sequential),Grade Point (Non-Sequential)',
+            'results' => 'required|array',
+        ]);
+
+        if ($validator->fails()) {
+            Log::channel('merit_log')->warning('Combined Merit Process Validation Failed', [
+                'errors' => $validator->errors()->toArray()
+            ]);
+            return response()->json([
+                'error' => 'Validation failed',
+                'details' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // Combined-exam merit ranking is identical to single-exam merit ranking — MeritProcessor
+            // only cares about results/exam_config.merit_process_type/academic_details/student_details,
+            // none of which differ structurally for a combined exam.
+            $results = app(MeritProcessor::class)->process($request->all());
+        } catch (\Throwable $e) {
+            Log::error('Combined MeritProcessor Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['error' => 'Combined merit processing failed'], 500);
+        }
+
+        // Log::channel('merit_log')->info('Combined Merit Process Result', [
+        //     'results' => $results
+        // ]);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Combined Merit Calculated Successfully',
+            'results' => $results
+        ], 202);
+    }
 }
