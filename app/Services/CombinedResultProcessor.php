@@ -65,7 +65,7 @@ class CombinedResultProcessor
             }
         }
 
-        return $this->envelope($gradeRules, $highest->toArray(), $results);
+        return $this->envelope($gradeRules, $highest->values()->toArray(), $results);
     }
 
     private function envelope(Collection $gradeRules, array $highestMarks, array $results): array
@@ -550,15 +550,21 @@ class CombinedResultProcessor
             $id = $subject['combined_id'] ?? null;
             if ($id === null) return;
             $key = "combined_{$id}";
+            $name = $subject['combined_name'] ?? null;
         } else {
             $id = $subject['subject_id'] ?? null;
             if ($id === null) return;
             $key = (string) $id;
+            $name = $subject['subject_name'] ?? null;
         }
 
         $current = $collection->get($key);
-        if ($current === null || $mark > $current) {
-            $collection->put($key, $mark);
+        if ($current === null || $mark > $current['highest_mark']) {
+            $collection->put($key, [
+                'subject_id' => $id,
+                'subject_name' => $name,
+                'highest_mark' => $mark,
+            ]);
         }
     }
 

@@ -242,9 +242,9 @@ class MarkEntryController extends Controller
     // Combined exam result process
     public function combinedResultProcess(Request $request)
     {
-        // Log::channel('exam_flex_log')->info('Combined Result Process Request', [
-        //     'request' => $request->all()
-        // ]);
+        Log::channel('exam_flex_log')->info('Combined Result Process Request', [
+            'request' => $request->all()
+        ]);
 
         $authHeader = $request->header('Authorization');
         if (!$authHeader || !str_starts_with($authHeader, 'Basic ')) {
