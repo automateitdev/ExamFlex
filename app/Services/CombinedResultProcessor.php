@@ -12,7 +12,7 @@ class CombinedResultProcessor
         'Last Exam Pass/Fail',
         'Subject Wise Pass/Fail',
         'Average (Short Code)',
-        'Average (Total)',
+        'Average (Total Marks)',
     ];
 
     public function process(array $payload): array
