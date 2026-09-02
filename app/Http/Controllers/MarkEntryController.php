@@ -265,7 +265,7 @@ class MarkEntryController extends Controller
         $validator = Validator::make($request->all(), [
             'institute_id' => 'required',
             'result_rules' => 'required|string|in:Average,Percentage',
-            'passing_rules' => 'required|string|in:Last Exam Pass/Fail,Subject Wise Pass/Fail,Average (Short Code),Average (Total)',
+            'passing_rules' => 'required|string|in:Last Exam Pass/Fail,Subject Wise Pass/Fail,Average (Short Code),Average (Total Marks)',
             'exams' => 'required|array|min:1',
             'exams.*.exam_id' => 'required',
             'exams.*.sequence' => 'required|integer',
