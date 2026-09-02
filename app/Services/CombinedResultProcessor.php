@@ -221,6 +221,7 @@ class CombinedResultProcessor
 
         $gpa = $subjectCount > 0 ? round($totalGP / $subjectCount, 2) : 0.0;
         $totalMark = round2($totalMark);
+        $letterGrade = $this->gpaToLetterGrade($gpa, $gradeRules);
 
         return [
             'student_id' => $student['student_id'] ?? null,
@@ -229,8 +230,10 @@ class CombinedResultProcessor
             'subjects' => $subjects,
             'total_mark_without_optional' => $totalMark,
             'gpa_without_optional' => format2($gpa),
+            'letter_grade_without_optional' => $letterGrade,
             'total_mark_with_optional' => $totalMark,
             'gpa_with_optional' => format2($gpa),
+            'letter_grade_with_optional' => $letterGrade,
             'result_status' => $resultStatus,
             'failed_subject_count' => $failedSubjectCount,
             'combination_meta' => ['missing_in_exams' => []],
@@ -268,8 +271,10 @@ class CombinedResultProcessor
             'subjects' => $subjects,
             'total_mark_without_optional' => null,
             'gpa_without_optional' => format2(0),
+            'letter_grade_without_optional' => 'F',
             'total_mark_with_optional' => null,
             'gpa_with_optional' => format2(0),
+            'letter_grade_with_optional' => 'F',
             'result_status' => 'Fail',
             'failed_subject_count' => count($subjects),
             'combination_meta' => [
@@ -504,7 +509,7 @@ class CombinedResultProcessor
         // a failed subject always displays grade F for GPA consistency on the mark sheet.
         $isPass = match ($passingRules) {
             'Subject Wise Pass/Fail' => !$anyExamSubjectFailed,
-            'Average (Total)' => $grade !== 'F',
+            'Average (Total Marks)' => $grade !== 'F',
             default => !in_array(false, $codePassStatus, true), // Average (Short Code), Last Exam Pass/Fail
         };
 
@@ -569,8 +574,18 @@ class CombinedResultProcessor
     }
 
     // ─────────────────────────────────────────────
-    // GRADE LOOKUP (mirrors ResultCalculator::getGradePoint/getGrade)
+    // GRADE LOOKUP (mirrors ResultCalculator::getGradePoint/getGrade/gpaToLetterGrade)
     // ─────────────────────────────────────────────
+
+    private function gpaToLetterGrade($gpa, Collection $gradeRules): string
+    {
+        foreach ($gradeRules->sortByDesc('grade_point') as $rule) {
+            if ($gpa >= $rule['grade_point']) {
+                return $rule['grade'];
+            }
+        }
+        return 'F';
+    }
 
     private function getGradePoint($percentage, $gradeRules)
     {
