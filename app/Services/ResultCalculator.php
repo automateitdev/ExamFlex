@@ -49,6 +49,7 @@ class ResultCalculator
 
         return [
             'has_combined' => $payload['has_combined'] ?? false,
+            'has_assessment_additions' => $payload['has_assessment_additions'] ?? false,
             'exam_name' => $payload['exam_name'],
             'results' => $results,
             'highest_marks' => $highestCollection->values()->toArray(),
@@ -200,21 +201,33 @@ class ResultCalculator
         $letterGradeWithout = $this->gpaToLetterGrade($gpaWithoutOptional, $gradeRules);
         $letterGradeWith     = $this->gpaToLetterGrade($gpaWithOptional, $gradeRules);
 
+        // === Assessment Attendance / Co-curricular Additions ===
+        // Added only to total_mark, after GPA/grade/result_status are finalized above.
+        // They are not subjects: no pass/fail, GPA, grade point, or subject-count impact —
+        // same treatment as a subject with only_add_to_total: true.
+        $assessmentAttendanceMark = round2((float) ($student['assessment_attendance_mark'] ?? 0));
+        $cocurricularMark = round2((float) ($student['cocurricular_mark'] ?? 0));
+        $assessmentAdditions = $assessmentAttendanceMark + $cocurricularMark;
+
         return [
             'student_id' => $student['student_id'] ?? 0,
             'student_name' => $student['student_name'] ?? 'N/A',
             'roll' => $student['roll'] ?? 'N/A',
             'subjects' => $merged,
-            'total_mark_without_optional' => round2($totalMarkWithoutOptional),
+            'total_mark_without_optional' => round2($totalMarkWithoutOptional + $assessmentAdditions),
             'gpa_without_optional' => $failed ? 0 : format2($gpaWithoutOptional),
             'letter_grade_without_optional' => $failed ? 'F' : $letterGradeWithout,
-            'total_mark_with_optional' => round2($totalMarkWithOptional),
+            'total_mark_with_optional' => round2($totalMarkWithOptional + $assessmentAdditions),
             'gpa_with_optional' => format2($gpaWithOptional),
             'letter_grade_with_optional' => $letterGradeWith,
             'result_status' => $status,
             'optional_bonus_gp' => format2($bonusGPFromOptional),
             'optional_bonus_mark' => $bonusMarkFromOptional,
             'failed_subject_count' => $totalFailCount,
+            'assessment_attendance_mark' => $assessmentAttendanceMark,
+            'cocurricular_mark' => $cocurricularMark,
+            'assessment_attendance' => $student['assessment_attendance'] ?? null,
+            'cocurricular' => $student['cocurricular'] ?? [],
         ];
     }
 
