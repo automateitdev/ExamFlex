@@ -130,21 +130,15 @@ class ExamMarkCalculator
         // }
 
         if ($hasOverall) {
-            // ✅ Parse the overall rule's own exam_code_title to know which parts it actually covers
-            $overallScope = collect(explode(',', $overallDetail['exam_code_title'] ?? ''))
-                ->map(fn($c) => trim($c))
-                ->filter()
-                ->toArray();
-
-            // ✅ Only sum the parts listed in that scope, not all $details
-            $scopedDetails = empty($overallScope)
-                ? $details // fallback: if nothing parsed, keep old (all-parts) behavior
-                : $details->whereIn('exam_code_title', $overallScope);
+            // ✅ FIX: ALL rows flagged is_overall = true are members of the overall group —
+            // don't rely on ->first() (arbitrarily picks one) or on exam_code_title parsing
+            // (each row has its own single code, not a combined string).
+            $overallDetails = $details->where('is_overall', true);
 
             $overallCalc = 0;
             $overallMaxScoped = 0;
 
-            foreach ($scopedDetails as $d) {
+            foreach ($overallDetails as $d) {
                 $got        = (float) ($partMarks[$d['exam_code_title']] ?? 0);
                 $conversion = ((float) ($d['conversion'] ?? 100)) / 100;
                 $total      = (float) ($d['total_mark'] ?? 0);
@@ -153,8 +147,10 @@ class ExamMarkCalculator
                 $overallMaxScoped += round2(roundMark($total * $conversion, $method));
             }
 
-            $overallRequiredPercentage = (float) $overallDetail['overall_mark'];
-            $overallRequired = round2(($overallRequiredPercentage / 100) * $overallMaxScoped); // ✅ use scoped max, not full totalMaxMark
+            // overall_mark (the required percentage) is the same value on every is_overall row —
+            // just take it from any one of them, e.g. the first.
+            $overallRequiredPercentage = (float) ($overallDetails->first()['overall_mark'] ?? 0);
+            $overallRequired = round2(($overallRequiredPercentage / 100) * $overallMaxScoped);
 
             $overallPass = $overallCalc >= $overallRequired;
         }
