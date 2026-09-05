@@ -112,19 +112,49 @@ class ExamMarkCalculator
         //     $overallRequired = $overallDetail['overall_mark'];
         //     $overallPass     = $overallCalc >= $overallRequired;
         // }
+        // if ($hasOverall) {
+        //     foreach ($details as $d) {
+        //         $got        = (float) ($partMarks[$d['exam_code_title']] ?? 0);
+        //         $conversion = ((float) ($d['conversion'] ?? 100)) / 100;
+
+        //         $overallCalc += round2(roundMark($got * $conversion, $method));
+        //     }
+
+        //     // ✅ overall_mark কে percentage হিসেবে treat করুন
+        //     $overallRequiredPercentage = (float) $overallDetail['overall_mark']; // e.g. 33 (means 33%)
+
+        //     // ✅ percentage থেকে actual mark বের করুন totalMaxMark এর সাপেক্ষে
+        //     $overallRequired = round2(($overallRequiredPercentage / 100) * $totalMaxMark);
+
+        //     $overallPass = $overallCalc >= $overallRequired;
+        // }
+
         if ($hasOverall) {
-            foreach ($details as $d) {
+            // ✅ Parse the overall rule's own exam_code_title to know which parts it actually covers
+            $overallScope = collect(explode(',', $overallDetail['exam_code_title'] ?? ''))
+                ->map(fn($c) => trim($c))
+                ->filter()
+                ->toArray();
+
+            // ✅ Only sum the parts listed in that scope, not all $details
+            $scopedDetails = empty($overallScope)
+                ? $details // fallback: if nothing parsed, keep old (all-parts) behavior
+                : $details->whereIn('exam_code_title', $overallScope);
+
+            $overallCalc = 0;
+            $overallMaxScoped = 0;
+
+            foreach ($scopedDetails as $d) {
                 $got        = (float) ($partMarks[$d['exam_code_title']] ?? 0);
                 $conversion = ((float) ($d['conversion'] ?? 100)) / 100;
+                $total      = (float) ($d['total_mark'] ?? 0);
 
-                $overallCalc += round2(roundMark($got * $conversion, $method));
+                $overallCalc      += round2(roundMark($got * $conversion, $method));
+                $overallMaxScoped += round2(roundMark($total * $conversion, $method));
             }
 
-            // ✅ overall_mark কে percentage হিসেবে treat করুন
-            $overallRequiredPercentage = (float) $overallDetail['overall_mark']; // e.g. 33 (means 33%)
-
-            // ✅ percentage থেকে actual mark বের করুন totalMaxMark এর সাপেক্ষে
-            $overallRequired = round2(($overallRequiredPercentage / 100) * $totalMaxMark);
+            $overallRequiredPercentage = (float) $overallDetail['overall_mark'];
+            $overallRequired = round2(($overallRequiredPercentage / 100) * $overallMaxScoped); // ✅ use scoped max, not full totalMaxMark
 
             $overallPass = $overallCalc >= $overallRequired;
         }
