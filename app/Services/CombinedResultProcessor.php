@@ -463,6 +463,7 @@ class CombinedResultProcessor
         $weightedPassRequirements = [];
         $weightedMaxMark = 0.0;
         $anyExamSubjectFailed = false;
+        $partsData = []; // keyed by constituent subject_id (e.g. Bangla 1st / Bangla 2nd)
 
         foreach ($exams as $exam) {
             $weight = $weights[$exam['exam_id']] ?? 0;
@@ -483,6 +484,28 @@ class CombinedResultProcessor
             }
 
             $weightedMaxMark += ((float) ($examCombined['total_max_mark'] ?? 0)) * $weight;
+
+            // Subject-wise breakdown (e.g. Bangla 1st, Bangla 2nd) — no mark_configs for these
+            // parts, so just weight-average each exam's already-computed part-level values.
+            foreach (($examCombined['parts'] ?? []) as $part) {
+                $partId = $part['subject_id'] ?? null;
+                if ($partId === null) continue;
+
+                $partsData[$partId] ??= [
+                    'subject_id' => $partId,
+                    'subject_name' => $part['subject_name'] ?? null,
+                    'final_mark' => 0.0,
+                    'grade_point' => 0.0,
+                    'part_marks' => [],
+                ];
+
+                $partsData[$partId]['final_mark'] += ((float) ($part['final_mark'] ?? 0)) * $weight;
+                $partsData[$partId]['grade_point'] += ((float) ($part['grade_point'] ?? 0)) * $weight;
+
+                foreach (($part['part_marks'] ?? []) as $code => $mark) {
+                    $partsData[$partId]['part_marks'][$code] = ($partsData[$partId]['part_marks'][$code] ?? 0) + ((float) $mark * $weight);
+                }
+            }
         }
 
         foreach ($weightedPartTotals as $code => $val) {
@@ -490,6 +513,24 @@ class CombinedResultProcessor
         }
         foreach ($weightedPassRequirements as $code => $val) {
             $weightedPassRequirements[$code] = round2($val);
+        }
+
+        $parts = [];
+        foreach ($partsData as $part) {
+            $partGradePoint = round($part['grade_point'], 2);
+            $partPartMarks = [];
+            foreach ($part['part_marks'] as $code => $val) {
+                $partPartMarks[$code] = round2($val);
+            }
+
+            $parts[] = [
+                'subject_id' => $part['subject_id'],
+                'subject_name' => $part['subject_name'],
+                'final_mark' => round2($part['final_mark']),
+                'part_marks' => $partPartMarks,
+                'grade' => $this->gpaToLetterGrade($partGradePoint, $gradeRules),
+                'grade_point' => format2($partGradePoint),
+            ];
         }
 
         $finalMark = round2($weightedFinalMark);
@@ -527,6 +568,7 @@ class CombinedResultProcessor
             'combined_grade' => $grade,
             'combined_grade_point' => format2($gradePoint),
             'combined_status' => $isPass ? 'Pass' : 'Fail',
+            'parts' => $parts,
         ];
 
         if ($passingRules === 'Average (Short Code)') {
