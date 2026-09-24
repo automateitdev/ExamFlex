@@ -135,7 +135,7 @@ class ResultCalculator
                     $totalGP += $single['grade_point'];
                     $subjectCount++;
                 }
-                if ($single['grade'] === 'F' && !$single['is_uncountable'] && !$single['is_optional'] && !$onlyAddToTotal) {
+                if ((float) $single['grade_point'] <= 0 && !$single['is_uncountable'] && !$single['is_optional'] && !$onlyAddToTotal) {
                     $failed = true;
                     $totalGP = 0;
                     $totalFailCount++;
@@ -146,7 +146,7 @@ class ResultCalculator
                 }
 
                 if ($single['is_optional'] ?? false) {
-                    if ($single['grade'] !== 'F') {
+                    if ((float) $single['grade_point'] > 0) {
                         $fourthSubjectPassed = true;
                     }
                 }
@@ -189,7 +189,8 @@ class ResultCalculator
 
         $finalGP = $failed ? 0 : ($totalGP + $bonusGPFromOptional);
         // $gpaWithoutOptional = $subjectCount > 0 ? round($totalGP / $subjectCount, 2) : 0;
-        $rawGpaWithoutOptional = $subjectCount > 0 ? round($totalGP / $subjectCount, 2) : 0;
+        $totalGPWithoutOptional = $failed ? 0 : $totalGP;
+        $rawGpaWithoutOptional = $subjectCount > 0 ? round($totalGPWithoutOptional / $subjectCount, 2) : 0;
         $gpaWithoutOptional = min($rawGpaWithoutOptional, $maxGradePoint);
         // $gpaWithOptional    = $subjectCount > 0 ? round($finalGP / $subjectCount, 2) : 0;
         $rawGpaWithOptional = $subjectCount > 0 ? round($finalGP / $subjectCount, 2) : 0;
@@ -215,8 +216,8 @@ class ResultCalculator
             'roll' => $student['roll'] ?? 'N/A',
             'subjects' => $merged,
             'total_mark_without_optional' => round2($totalMarkWithoutOptional),
-            'gpa_without_optional' => $failed ? 0 : format2($gpaWithoutOptional),
-            'letter_grade_without_optional' => $failed ? 'F' : $letterGradeWithout,
+            'gpa_without_optional' => format2($gpaWithoutOptional),
+            'letter_grade_without_optional' => $letterGradeWithout,
             'total_mark_with_optional' => round2($totalMarkWithOptional),
             'gpa_with_optional' => format2($gpaWithOptional),
             'letter_grade_with_optional' => $letterGradeWith,
@@ -402,10 +403,10 @@ class ResultCalculator
 
         if ($failedByPart) {
             $combinedGradePoint = 0.00;
-            $combinedGrade = 'F';
+            $combinedGrade = $this->failGradeLabel($gradeRules);
         }
 
-        $combinedStatus = ($combinedGrade === 'F') ? 'Fail' : 'Pass';
+        $combinedStatus = ((float) $combinedGradePoint <= 0) ? 'Fail' : 'Pass';
 
         return [
             'combined_id'           => $combinedId,
@@ -456,6 +457,14 @@ class ResultCalculator
             }
         }
         return 'F';
+    }
+
+    // Institute's own zero-point grade label (e.g. "Rasib" for Madrasah boards) instead of a hardcoded 'F',
+    // since grade names are configurable per institute and don't always use standard letter grades.
+    private function failGradeLabel($gradeRules)
+    {
+        $failRule = collect($gradeRules)->sortBy('grade_point')->first();
+        return $failRule['grade'] ?? 'F';
     }
 
     private function markToGradePoint($mark, $gradeRules)
