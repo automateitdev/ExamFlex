@@ -26,11 +26,15 @@ class ResultCalculator
             return ['results' => [], 'highest_marks' => [], 'total_students' => 0];
         }
 
+        // One exam_config entry per request (keyed by class_id, but a result-process
+        // call always covers a single class), so just take whichever one is there.
+        $resultView = collect($payload['exam_config'] ?? [])->first()['result_view'] ?? 'Grading';
+
         $results = [];
         $highestCollection = collect();
 
         foreach ($students as $student) {
-            $result = $this->processStudent($student, $gradeRules, $mark_configs);
+            $result = $this->processStudent($student, $gradeRules, $mark_configs, $resultView);
             $results[] = $result;
 
             foreach ($result['subjects'] as $s) {
@@ -84,7 +88,7 @@ class ResultCalculator
         }
     }
 
-    private function processStudent($student, $gradeRules, $mark_configs)
+    private function processStudent($student, $gradeRules, $mark_configs, $resultView = 'Grading')
     {
         $marks = $student['marks'] ?? [];
         $optionalId = $student['optional_subject_id'] ?? null;
@@ -100,6 +104,7 @@ class ResultCalculator
 
         $totalMarkWithoutOptional = 0.0;  // মূল মার্ক (৪র্থ ছাড়া)
         $totalMarkWithOptional    = 0.0;  // ৪র্থ পুরো মার্ক যোগ
+        $maxMarkWithoutOptional   = 0.0;  // same subjects' full possible marks, for percentage-based grading
 
         foreach ($groups as $groupId => $group) {
             if ($group->isEmpty()) continue;
@@ -123,6 +128,7 @@ class ResultCalculator
                 }
 
                 $totalMarkWithoutOptional += $combinedResult['final_mark'];
+                $maxMarkWithoutOptional += $combinedResult['total_max_mark'];
             } else {
                 $single = $this->processSingle($first, $gradeRules, $mark_configs);
 
@@ -143,6 +149,7 @@ class ResultCalculator
 
                 if (!$single['is_optional'] && (!$single['is_uncountable'] || $onlyAddToTotal)) {
                     $totalMarkWithoutOptional += $single['final_mark'];
+                    $maxMarkWithoutOptional += $single['total_max_mark'];
                 }
 
                 if ($single['is_optional'] ?? false) {
@@ -201,6 +208,18 @@ class ResultCalculator
 
         $letterGradeWithout = $this->gpaToLetterGrade($gpaWithoutOptional, $gradeRules);
         $letterGradeWith     = $this->gpaToLetterGrade($gpaWithOptional, $gradeRules);
+
+        // Result Status view: grade is looked up from total_mark_without_optional's own
+        // percentage against grade_rules' from_mark/to_mark, instead of the GPA average —
+        // but a failed compulsory subject still forces the institute's own fail label.
+        if ($resultView === 'Result Status') {
+            $percentageWithoutOptional = $maxMarkWithoutOptional > 0
+                ? round(($totalMarkWithoutOptional / $maxMarkWithoutOptional) * 100, 2)
+                : 0;
+            $letterGradeWithout = $failed
+                ? $this->failGradeLabel($gradeRules)
+                : $this->getGrade($percentageWithoutOptional, $gradeRules);
+        }
 
         // === Assessment Attendance / Co-curricular Additions ===
         // Added only to total_mark, after GPA/grade/result_status are finalized above.
@@ -306,6 +325,7 @@ class ResultCalculator
             'total_marks'    => round2($totalMarks),
             'converted_mark' => round2($convertedMark),
             'final_mark'     => round2($finalMark),
+            'total_max_mark' => $totalMaxConverted,
             'grace_mark'     => $grace,
             'percentage'     => $rawPercentage, // Keep raw for display/transcripts
 
@@ -426,8 +446,6 @@ class ResultCalculator
             'combined_pass_requirements' => $combinedPassRequirements
         ];
     }
-
-
 
     // === GPA থেকে Letter Grade (SSC/HSC) ===
     private function gpaToLetterGrade($gpa, $gradeRules)
